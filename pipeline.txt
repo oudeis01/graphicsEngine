@@ -1,0 +1,4 @@
+gen n=noise();
+gen v=voronoi();
+n=multiply(n,v);
+output(n,0);
