@@ -1,16 +1,23 @@
-MIT License
+NON-COMMERCIAL LICENSE
 
 Copyright (c) 2025 Graphics Engine Project
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software is provided for NON-COMMERCIAL USE ONLY.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to use,
+copy, modify, and distribute the Software for NON-COMMERCIAL PURPOSES ONLY,
+subject to the following conditions:
+
+1. The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+2. The Software may not be used for commercial purposes without obtaining
+   appropriate commercial licenses for all included third-party libraries,
+   particularly LYGIA GLSL Library.
+
+3. Any redistribution must preserve this license notice and all third-party
+   license requirements detailed below.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -21,63 +28,95 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ================================================================================
+IMPORTANT: LICENSE COMPATIBILITY ANALYSIS
+================================================================================
+
+⚠️  WARNING: This project contains libraries with INCOMPATIBLE licenses that 
+    restrict commercial use and distribution under MIT license.
+
+================================================================================
 THIRD-PARTY LICENSES
 ================================================================================
 
 This project uses the following third-party libraries:
 
+### COMPATIBLE WITH MIT LICENSE:
+
 ### GLFW (3.3.8)
-- License: zlib/libpng License (compatible with MIT)
+- License: zlib/libpng License ✅ (compatible with MIT)
 - Repository: https://github.com/glfw/glfw
 - Copyright: Copyright (c) 2002-2006 Marcus Geelnard, Copyright (c) 2006-2019 Camilla Löwy
 
 ### GLEW (2.2.0)
-- License: Modified BSD License, Mesa 3-D License (MIT), Khronos License (MIT)
+- License: Modified BSD License, Mesa 3-D License (MIT), Khronos License (MIT) ✅
 - Repository: https://github.com/nigels-com/glew
 - Copyright: Copyright (C) 2002-2007, Milan Ikits <milan ikits[]ieee org>
 
-### liblo (0.31)
-- License: LGPL-2.1+ (GNU Lesser General Public License)
-- Repository: https://github.com/radarsat1/liblo
-- Copyright: Copyright (C) 2014 Steve Harris et al.
-- Note: LGPL allows linking with MIT-licensed code
-
 ### ImGui (1.90.1)
-- License: MIT License
+- License: MIT License ✅
 - Repository: https://github.com/ocornut/imgui
 - Copyright: Copyright (c) 2014-2024 Omar Cornut
 
 ### ImGui Node Editor
-- License: MIT License
+- License: MIT License ✅
 - Repository: https://github.com/thedmd/imgui-node-editor
 - Copyright: Copyright (c) 2019-2021 Michał Cichoń
 
 ### AngelScript
-- License: zlib License (compatible with MIT)
+- License: zlib License ✅ (compatible with MIT)
 - Repository: https://github.com/codecat/angelscript-mirror
 - Copyright: Copyright (c) 2003-2024 Andreas Jönsson
 
-### LYGIA GLSL Library
-- License: The Prosperity Public License 3.0.0 (NON-COMMERCIAL)
-- Repository: https://github.com/patriciogonzalezvivo/lygia
-- Copyright: Patricio Gonzalez Vivo (patriciogonzalezvivo.com)
-- Note: Commercial use requires separate licensing after 30-day trial period
-
 ### OpenGL
-- System graphics library - licensing varies by platform
+- System graphics library - licensing varies by platform ✅
 - Industry standard graphics API
 
+### POTENTIALLY PROBLEMATIC LICENSES:
+
+### liblo (0.31)
+- License: LGPL-2.1+ ⚠️ (GNU Lesser General Public License)
+- Repository: https://github.com/radarsat1/liblo
+- Copyright: Copyright (C) 2014 Steve Harris et al.
+- CONCERN: LGPL requires that users can replace/relink the LGPL library
+- MITIGATION: LGPL allows linking with MIT code as long as liblo remains dynamically linked
+
+### LYGIA GLSL Library
+- License: Prosperity Public License 3.0.0 ❌ (NON-COMMERCIAL ONLY)
+- Repository: https://github.com/patriciogonzalezvivo/lygia
+- Copyright: Patricio Gonzalez Vivo (patriciogonzalezvivo.com)
+- CRITICAL ISSUE: 
+  * 30-day trial period for commercial use
+  * Requires separate commercial license after trial
+  * Makes this project NON-COMMERCIAL ONLY under current license structure
+
 ================================================================================
-LICENSE COMPATIBILITY NOTE
+LICENSE COMPATIBILITY CONCLUSION
 ================================================================================
 
-All third-party libraries retain their original licensing terms. The combination
-of licenses allows this project to be distributed under the MIT License while
-maintaining compatibility with all dependencies:
+❌ CANNOT USE MIT LICENSE FOR COMMERCIAL DISTRIBUTION
 
-- MIT, zlib, and BSD licenses are fully compatible
-- LGPL (liblo) allows linking with MIT-licensed code
-- LYGIA requires separate commercial licensing for commercial use
+This project CANNOT be distributed under MIT license for commercial use due to:
 
-For commercial use of this project, verify LYGIA licensing requirements.
-Please refer to individual license files for complete terms.
+1. LYGIA Prosperity License 3.0.0 restricts commercial use to 30-day trial
+2. Commercial distribution requires separate LYGIA commercial license
+
+RECOMMENDED SOLUTIONS:
+
+OPTION 1 - Non-Commercial Distribution:
+- Change project license to match LYGIA's non-commercial terms
+- Keep LGPL compliance for liblo (dynamic linking)
+- Clearly mark as "Non-Commercial Use Only"
+
+OPTION 2 - Commercial Distribution:
+- Obtain commercial license for LYGIA from patriciogonzalezvivo@gmail.com
+- Keep current MIT license once commercial LYGIA license acquired
+- Maintain LGPL compliance for liblo
+
+OPTION 3 - Remove LYGIA Dependency:
+- Replace LYGIA with MIT-compatible shader library
+- Return to pure MIT licensing
+- Maintain LGPL compliance for liblo only
+
+================================================================================
+CURRENT PROJECT STATUS: NON-COMMERCIAL USE ONLY
+================================================================================
