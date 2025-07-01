@@ -2,72 +2,162 @@
 
 ## Vision
 
-이 프로젝트는 SuperCollider의 구조를 모방하여, 엔진(Engine)과 인터프리터(Interpreter)를 분리한 모듈형 실시간 그래픽 파이프라인 툴을 목표로 합니다. DSL(도메인 특화 언어)과 노드 기반 GUI를 통해, 사용자는 AngelScript(엔젤스크립트)로 작성된 스크립트 또는 노드 에디터(Node Editor)를 통해 실시간으로 GLSL 기반의 Uber Shader(우버 셰이더)를 생성하고, 다양한 그래픽 효과를 실험할 수 있습니다.
+이 프로젝트는 SuperCollider의 구조를 모방하여, 세 개의 독립적인 바이너리(Engine, Node Editor, Code Interpreter)로 분리된 모듈형 실시간 그래픽 파이프라인 툴을 목표로 합니다. OSC(Open Sound Control) 프로토콜을 통해 통신하며, DSL(도메인 특화 언어)과 노드 기반 GUI를 통해 사용자는 AngelScript(엔젤스크립트)로 작성된 스크립트 또는 노드 에디터(Node Editor)를 통해 실시간으로 GLSL 기반의 Uber Shader(우버 셰이더)를 생성하고, 다양한 그래픽 효과를 실험할 수 있습니다.
 
 ---
 
-## Architecture (아키텍처)
+## Distributed Architecture (분산 아키텍처)
 
 ```mermaid
-graph TD
-    A[User] -->|Script/Node| B(Script Handler / Node Editor)
-    B -->|Pipeline Description| C(Shader Manager)
-    C -->|Uber GLSL Code| D(Graphics Engine)
-    D -->|Rendering| E[Main Render Window]
-    C -->|Intermediate FBOs| F[Node Editor Window]
-    F -->|Node Previews| B
-    D -->|API Calls| G[Graphics API Abstraction]
-    G -->|OpenGL/Vulkan| H[GPU]
+graph TB
+    subgraph "Graphics Engine Binary"
+        A[Graphics Engine Server]
+        B[Shader Manager]
+        C[Render Context]
+        D[OpenGL Context]
+    end
+    
+    subgraph "Node Editor Binary"
+        E[Node Editor GUI]
+        F[ImGui Node Editor]
+        G[OSC Client]
+    end
+    
+    subgraph "Code Interpreter Binary"
+        H[AngelScript Engine]
+        I[File Watcher]
+        J[Script Parser]
+        K[OSC Client]
+    end
+    
+    subgraph "OSC Network Communication"
+        L[OSC Messages]
+        M[Pipeline Updates]
+        N[Sync Commands]
+        O[State Queries]
+    end
+    
+    A -.->|OSC: 57120| L
+    G -.->|OSC: 57121| L
+    K -.->|OSC: 57122| L
+    
+    E -->|Pipeline Graph| G
+    H -->|Script AST| K
+    B -->|Uber Shader| C
+    C -->|OpenGL| D
+    
+    L --> M
+    L --> N
+    L --> O
 ```
+
+### Binary Communication Flow
+- **Graphics Engine**: OSC 서버 (기본: localhost:57120)
+- **Node Editor**: OSC 클라이언트 (송신: localhost:57121)  
+- **Code Interpreter**: OSC 클라이언트 (송신: localhost:57122)
 
 ---
 
 ## Main Interface & Synchronization (메인 인터페이스 및 동기화)
 
-이 어플리케이션의 메인 인터페이스는 AngelScript(엔젤스크립트)로 작성된 코드 파일입니다. 사용자가 이 파일을 수정하면, 그래픽 엔진(Graphics Engine)이 이를 감지하여 파이프라인을 즉시 수정합니다. 만약 노드 에디터(Node Editor)가 실행 중이라면, 노드의 연결 구조도 엔젤스크립트 코드에 맞게 자동으로 동기화됩니다. 반대로, 사용자가 노드 에디터에서 노드를 조작하면, 이에 맞춰 그래픽 파이프라인과 엔젤스크립트 코드 파일 역시 자동으로 갱신됩니다. 즉, 스크립트와 노드 에디터는 양방향 실시간 동기화가 이루어집니다.
+이 어플리케이션의 메인 인터페이스는 세 개의 독립적인 바이너리로 구성됩니다:
+
+1. **Graphics Engine**: OSC 서버로 동작하며, 렌더링 파이프라인을 관리하고 실제 그래픽 출력을 담당
+2. **Code Interpreter**: AngelScript 파일의 변경을 감지하고, 스크립트를 파싱하여 OSC를 통해 Graphics Engine에 파이프라인 업데이트를 전송
+3. **Node Editor**: 노드 기반 GUI를 제공하며, 사용자 조작을 OSC 메시지로 변환하여 Graphics Engine에 전송
+
+모든 동기화는 OSC 프로토콜을 통해 이루어지며, 각 바이너리는 독립적으로 실행/종료가 가능합니다. 사용자가 스크립트 파일을 수정하거나 노드를 조작하면, 해당 변경사항이 즉시 OSC를 통해 Graphics Engine에 전달되어 실시간으로 파이프라인이 업데이트됩니다.
 
 ---
 
-## Module Breakdown (모듈 구성)
+## Binary Breakdown (바이너리 구성)
 
-### 1. 그래픽 엔진(Graphics Engine)
+### 1. Graphics Engine Binary (그래픽 엔진 바이너리)
+
+- **OSC 서버**: liblo 기반 OSC 서버로 동작 (기본 포트: 57120)
 - **OpenGL 4.1 Core Profile 지원**: 크로스 플랫폼 호환성(macOS 포함) 보장, 향후 컴퓨트 셰이더 지원 시 상위 버전 확장 가능
-- **OpenGL 컨텍스트 생성 및 관리(OpenGL Context Creation & Management)**
-- **셰이더 렌더링(Shader Rendering)**
+- **OpenGL 컨텍스트 생성 및 관리**: GLFW 기반 윈도우 및 컨텍스트 관리
+- **셰이더 렌더링**: 실시간 GLSL 코드 컴파일 및 렌더링
 - **PIMPL 패턴**: 구현 세부사항 캡슐화로 컴파일 시간 단축 및 ABI 안정성 확보
 - **모듈형 아키텍처**: RenderContext, ShaderManager, Pipeline 분리로 각 구성요소 독립적 관리
-- 미래에는 Vulkan 등 다양한 Graphics API(그래픽 API)로 확장 가능하도록 설계
+- **OSC 메시지 처리**: 파이프라인 업데이트, 셰이더 파라미터 변경, 상태 쿼리 등
 
-### 2. 셰이더 매니저(Shader Manager)
-- **우버 GLSL 코드 생성(Uber GLSL Code Generation)**: 사용자 입력(스크립트/노드)에 따라 LYGIA GLSL 라이브러리에서 필요한 코드 조합
-- **셰이더 핫리로딩(Shader Hot-Reloading)**: 실시간 GLSL 코드 교체 및 컴파일
-- **모듈 시스템(Module System)**: 각 Generator/Operator(제네레이터/오퍼레이터)를 함수 단위로 모듈화
+### 2. Node Editor Binary (노드 에디터 바이너리)
 
-### 3. 노드 에디터(Node Editor)
-- **ImGui Node Editor 기반 GUI**
-- **노드 기반 파이프라인 편집(Node-based Pipeline Editing)**: 각 노드는 Generator/Operator(제네레이터/오퍼레이터)에 대응
-- **Intermediate FBO 렌더링(Intermediate FBO Rendering)**: 각 노드별로 작은 크기의 FBO(Frame Buffer Object)에 렌더링, 실시간 미리보기 제공
-- **별도 윈도우에서 동작(Separate Window)**: 메인 렌더 윈도우와 별도의 창에서 동작
+- **ImGui Node Editor 기반 GUI**: 독립적인 GLFW 윈도우에서 실행
+- **OSC 클라이언트**: liblo 기반 OSC 클라이언트로 Graphics Engine과 통신
+- **노드 기반 파이프라인 편집**: 각 노드는 Generator/Operator에 대응
+- **실시간 미리보기**: Graphics Engine으로부터 중간 렌더링 결과 수신 및 표시
+- **양방향 동기화**: 노드 조작 시 OSC를 통해 Graphics Engine 및 Code Interpreter와 동기화
 
-### 4. 스크립트 핸들러/호스트 API(Script Handler / Host API)
-- **AngelScript 연동(AngelScript Integration)**: AngelScript(엔젤스크립트)를 C++에 이식하여 DSL로 사용
-- **스크립트 감시 및 핫리로딩(Script Watching & Hot-Reloading)**: 외부 텍스트 파일의 변경 감지 및 자동 반영
-- **스크립트 컴파일 및 실행(Script Compilation & Execution)**: AngelScript의 언어 기능을 그래픽 파이프라인에 맞게 해석 및 변환
+### 3. Code Interpreter Binary (코드 인터프리터 바이너리)
 
-### 5. 그래픽 API 추상화 레벨(Graphics API Abstraction Layer)
-- **OpenGL/Vulkan 추상화(OpenGL/Vulkan Abstraction)**: 향후 Vulkan 등 다양한 API로의 확장성 확보
-- **현재 구현(Current Implementation)**: 현재는 OpenGL만 지원, 추후 확장 예정
+- **AngelScript 엔진**: AngelScript 파일 파싱 및 AST 생성
+- **파일 와처**: 스크립트 파일 변경 감지 및 자동 리로드
+- **OSC 클라이언트**: liblo 기반 OSC 클라이언트로 Graphics Engine과 통신
+- **DSL 파싱**: 사용자 정의 그래픽 파이프라인 스크립트를 파이프라인 그래프로 변환
+- **CLI 인터페이스**: 명령줄 기반 스크립트 실행 및 디버깅
+
+### 4. Shader Manager (셰이더 매니저)
+
+- **우버 GLSL 코드 생성**: OSC 메시지로 받은 파이프라인 그래프를 LYGIA GLSL 라이브러리 기반 셰이더 코드로 변환
+- **셰이더 핫리로딩**: 실시간 GLSL 코드 교체 및 컴파일
+- **모듈 시스템**: 각 Generator/Operator를 함수 단위로 모듈화
+- **LYGIA 통합**: 동적 include 및 의존성 해결
+
+### 5. OSC Communication Layer (OSC 통신 레이어)
+
+- **liblo 기반**: 크로스 플랫폼 OSC 라이브러리 사용
+- **메시지 타입**: 파이프라인 업데이트, 파라미터 변경, 상태 쿼리, 동기화 명령
+- **에러 핸들링**: 네트워크 오류, 메시지 파싱 오류 등 robust 처리
+- **설정 가능한 주소/포트**: 각 바이너리의 OSC 주소와 포트를 런타임에 설정 가능
 
 ---
 
-## Workflow (작업 흐름)
+## OSC Communication Workflow (OSC 통신 워크플로우)
 
-1. **User**는 AngelScript(엔젤스크립트) 기반 DSL 파일을 작성하거나, 노드 에디터(Node Editor)에서 그래픽 파이프라인을 구성합니다.
-2. **스크립트 핸들러(Script Handler)** 또는 **노드 에디터(Node Editor)** 는 파이프라인 정보를 **셰이더 매니저(Shader Manager)** 에 전달합니다.
-3. **셰이더 매니저(Shader Manager)** 는 필요한 LYGIA GLSL 모듈을 조합하여 우버 셰이더(Uber Shader)를 생성합니다.
-4. **그래픽 엔진(Graphics Engine)** 은 우버 셰이더를 GPU에 업로드하고, 실시간 렌더링을 수행합니다.
-5. **노드 에디터(Node Editor)** 가 활성화된 경우, 각 노드별로 Intermediate FBO(Frame Buffer Object)를 생성하여 미리보기를 제공합니다.
-6. **그래픽 API 추상화 레벨(Graphics API Abstraction Layer)**은 향후 다양한 그래픽 API로의 확장을 지원합니다.
+### 1. 시스템 시작 (System Startup)
+
+1. **Graphics Engine Binary**를 먼저 실행 (OSC 서버로 동작)
+2. **Node Editor Binary** 또는 **Code Interpreter Binary** (또는 둘 다) 실행
+3. 각 클라이언트가 Graphics Engine의 OSC 서버에 연결
+4. 초기 상태 동기화 수행
+
+### 2. 스크립트 기반 워크플로우 (Script-based Workflow)
+
+1. **사용자**가 AngelScript 파일을 작성/수정
+2. **Code Interpreter**가 파일 변경을 감지하고 스크립트를 파싱
+3. **Code Interpreter**가 OSC 메시지를 통해 파이프라인 그래프를 Graphics Engine에 전송
+4. **Graphics Engine**의 **Shader Manager**가 LYGIA 기반 우버 셰이더를 생성
+5. **Graphics Engine**이 셰이더를 컴파일하고 실시간 렌더링 수행
+6. **Node Editor**가 실행 중이면 OSC를 통해 노드 그래프를 자동 동기화
+
+### 3. 노드 기반 워크플로우 (Node-based Workflow)
+
+1. **사용자**가 Node Editor에서 노드를 추가/연결/수정
+2. **Node Editor**가 OSC 메시지를 통해 파이프라인 변경사항을 Graphics Engine에 전송
+3. **Graphics Engine**이 파이프라인을 업데이트하고 렌더링 수행
+4. **Code Interpreter**가 실행 중이면 OSC를 통해 AngelScript 파일을 자동 업데이트
+5. **Node Editor**가 Graphics Engine으로부터 중간 렌더링 결과를 수신하여 노드별 미리보기 표시
+
+### 4. OSC 메시지 타입 (OSC Message Types)
+
+```
+/pipeline/update        - 파이프라인 그래프 업데이트
+/pipeline/node/add      - 노드 추가
+/pipeline/node/remove   - 노드 제거
+/pipeline/node/connect  - 노드 연결
+/pipeline/param/set     - 파라미터 값 설정
+/render/request         - 렌더링 요청
+/state/sync             - 상태 동기화
+/error                  - 에러 메시지
+```
+
+### 5. 에러 처리 및 복구 (Error Handling & Recovery)
+
+- OSC 연결 끊김 시 자동 재연결 시도
+- 잘못된 파이프라인 그래프 시 이전 상태로 롤백
+- 셰이더 컴파일 에러 시 OSC를 통해 클라이언트에 에러 메시지 전송
 
 ---
 ---
@@ -76,33 +166,85 @@ graph TD
 
 ```text
 graphicsEngine-clean2/
-├── src/                    # Source code
-│   └── graphics/          # Graphics engine modules
-├── shaders/               # GLSL shader files
-│   ├── modules/          # Reusable shader modules
-│   ├── default.frag      # Default fragment shader
-│   └── passthrough.vert  # Default vertex shader
-├── examples/              # Example applications
-│   ├── shader_manager_demo.cpp
-│   └── main_test_node_editor.cpp
-├── tests/                 # Test files and utilities
-│   ├── manual_test_guide.py
+├── src/                           # Source code
+│   ├── graphics/                  # Graphics Engine Binary
+│   │   ├── GraphicsEngine.*       # Main graphics engine
+│   │   ├── RenderContext.*        # OpenGL context management
+│   │   ├── ShaderManager.*        # Uber shader generation
+│   │   ├── Pipeline.*             # Pipeline management
+│   │   └── OSCServer.*            # OSC server implementation
+│   ├── node_editor/               # Node Editor Binary
+│   │   ├── NodeEditor.*           # ImGui-based node editor
+│   │   ├── NodeGraph.*            # Node graph management
+│   │   └── OSCClient.*            # OSC client for Graphics Engine
+│   └── code_interpreter/          # Code Interpreter Binary
+│       ├── AngelScriptEngine.*    # AngelScript integration
+│       ├── FileWatcher.*          # File change detection
+│       ├── ScriptParser.*         # DSL parsing
+│       └── OSCClient.*            # OSC client for Graphics Engine
+├── external/                      # External dependencies
+│   ├── lygia/                     # LYGIA GLSL library
+│   ├── liblo/                     # OSC communication (via CMake)
+│   ├── imgui-node-editor/         # Node editor (via CMake)
+│   └── angelscript/               # AngelScript (via CMake)
+├── examples/                      # Example scripts and usage
+│   ├── scripts/                   # Example AngelScript files
+│   ├── shader_manager_demo.cpp    # Legacy demo
+│   └── main_test_node_editor.cpp  # Legacy test
+├── tests/                         # Test files and utilities
+│   ├── osc_test.cpp              # OSC communication tests
+│   ├── integration_test.cpp       # Multi-binary integration tests
 │   └── README.md
-├── scripts/               # Build and utility scripts
-├── external/              # External dependencies (LYGIA, etc.)
-├── build/                 # Build output (generated)
-└── CMakeLists.txt         # Build configuration
+├── scripts/                       # Build and utility scripts
+│   ├── run_engine.sh             # Start Graphics Engine
+│   ├── run_node_editor.sh        # Start Node Editor
+│   └── run_code_interpreter.sh   # Start Code Interpreter
+├── build/                         # Build output (generated)
+├── CMakeLists.txt                 # Build configuration
+└── README.md                      # Project documentation
 ```
+
+---
+
+## Implementation Roadmap (구현 로드맵)
+
+### Phase 1: OSC Infrastructure (OSC 인프라 구축)
+
+- **liblo 통합**: CMake를 통한 liblo 의존성 추가
+- **OSC 서버/클라이언트 래퍼 클래스**: C++ 인터페이스 구현
+- **기본 OSC 메시지 프로토콜**: 파이프라인 업데이트, 상태 동기화 등
+- **에러 핸들링 및 재연결 로직**: robust 네트워크 통신
+
+### Phase 2: Binary Separation (바이너리 분리)
+
+- **Graphics Engine Binary**: 현재 구현을 OSC 서버 기반으로 리팩터링
+- **Node Editor Binary**: ImGui Node Editor 통합 및 OSC 클라이언트 구현
+- **Code Interpreter Binary**: AngelScript 통합 및 파일 와처 구현
+- **CMake 빌드 시스템**: 세 개의 독립적인 타겟 생성
+
+### Phase 3: Integration & Testing (통합 및 테스트)
+
+- **OSC 통신 테스트**: 바이너리 간 메시지 교환 검증
+- **실시간 동기화**: 스크립트-노드-엔진 간 양방향 동기화
+- **예제 시나리오**: 다양한 사용 사례에 대한 예제 구현
+- **문서화**: 사용자 가이드 및 API 문서 작성
+
+### Phase 4: Advanced Features (고급 기능)
+
+- **Vulkan 지원**: Graphics Engine에 Vulkan 백엔드 추가
+- **네트워크 투명성**: 다른 머신에서 실행되는 바이너리 간 통신 지원
+- **플러그인 시스템**: 사용자 정의 노드/오퍼레이터 지원
+- **협업 기능**: 다중 사용자 실시간 편집 지원
 
 ---
 
 ## Future Directions (향후 발전 방향)
 
-- **Vulkan 등 다양한 Graphics API(그래픽 API) 지원**
-- **AngelScript DSL의 그래픽 파이프라인 친화적 확장**
-- **노드 에디터(Node Editor)의 고도화 및 사용자 경험 개선**
-- **멀티 플랫폼 지원 및 성능 최적화**
-- **실시간 협업/공유 기능 등 확장성 고려**
+- **분산 컴퓨팅**: OSC 네트워크를 통한 다중 머신 렌더링 클러스터
+- **웹 인터페이스**: 웹 기반 노드 에디터 및 원격 제어
+- **VR/AR 지원**: 몰입형 3D 그래픽 파이프라인 편집 환경
+- **AI 통합**: 머신러닝 기반 셰이더 최적화 및 파이프라인 제안
+- **클라우드 렌더링**: 클라우드 기반 고성능 렌더링 서비스 연동
 
 ---
 

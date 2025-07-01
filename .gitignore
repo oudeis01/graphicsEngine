@@ -1,333 +1,116 @@
-# ============================================================================
-# Modern C++ Graphics Engine .gitignore
-# ============================================================================
-
+#------------------------------------------------------------------------------#
 # Build directories
-build/
-Build/
-cmake-build-*/
-out/
-bin/
-lib/
-install/
+#------------------------------------------------------------------------------#
+# out-of-source builds
+/build/
+/bin/
+/lib/
+/lib64/
+/cmake-build-*/
+/Debug/
+/Release/
+/x64/
+/x86/
 
-# CMake generated files
-CMakeCache.txt
+#------------------------------------------------------------------------------#
+# CMake files
+#------------------------------------------------------------------------------#
 CMakeFiles/
+CMakeCache.txt
 cmake_install.cmake
 Makefile
-*.cmake
-!CMakeLists.txt
 CTestTestfile.cmake
-_deps/
-Testing/
+*.cmake
 
-# Compiled Object files
-*.slo
-*.lo
+# FetchContent or external deps
+_deps/
+external/
+
+#------------------------------------------------------------------------------#
+# Object files and libraries
+#------------------------------------------------------------------------------#
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
+*.lo
+*.la
+*.al
+*.libs
+*.lib
+*.a
 *.so
 *.so.*
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
 *.exe
-*.out
-*.app
 
-# ============================================================================
-# IDE and Editor files
-# ============================================================================
-
-# Visual Studio
-.vs/
-*.vcxproj.user
-*.vcxproj.filters
-*.sln.docstates
-*.opensdf
-*.sdf
-*.VC.db
-*.VC.VC.opendb
-*.suo
-*.user
-*.ncb
-*.aps
-*.pdb
-*.ilk
-*.meta
-*.obj
-*.iobj
-*.pch
-*.tlog
+#------------------------------------------------------------------------------#
+# Logs, coverage, temp files
+#------------------------------------------------------------------------------#
 *.log
-*.idb
-*.ipdb
-*.pgc
-*.pgd
-*.rsp
-*.sbr
-*.tlb
-*.tli
-*.tlh
-*.tmp
-*.tmp_proj
-*.vspscc
-*.vssscc
-.builds
-*.pidb
-*.svclog
-*.scc
-
-# Visual Studio Code
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
-
-# JetBrains IDEs (CLion, etc.)
-.idea/
-*.iws
-*.iml
-*.ipr
-cmake-build-*/
-
-# Xcode (for macOS development)
-*.xcodeproj/
-*.xcworkspace/
-DerivedData/
-*.moved-aside
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-xcuserdata/
-*.xccheckout
-*.xcscmblueprint
-
-# Qt Creator
-CMakeLists.txt.user
-CMakeLists.txt.user.*
-
-# ============================================================================
-# Dependencies and External Libraries
-# ============================================================================
-
-# External dependencies (managed by CMake FetchContent)
-external/
-_deps/
-third_party/
-vendor/
-
-# Package managers
-conan/
-vcpkg/
-.conan/
-
-# ============================================================================
-# Graphics and Shader Files
-# ============================================================================
-
-# Generated and compiled shader files
-shaders/generated/
-shaders/compiled/
-shaders/cache/
-*.spv
-*.spirv
-*.dxbc
-*.metallib
-
-# Graphics debugging and profiling tools
-*.gpu_trace
-*.renderdoc
-*.gputrace
-*.nsight
-*.nvprof
-*.pix
-*.snapdragon
-
-# OpenGL debug output
-*.gl_debug
-gl_debug.txt
-
-# Vulkan validation layers output
-vk_layer_settings.txt
-
-# ============================================================================
-# Documentation and Reports
-# ============================================================================
-
-# Documentation generated files
-docs/html/
-docs/latex/
-docs/xml/
-doxygen_warnings.txt
-*.dox
-
-# Coverage reports
-*.gcov
-*.gcda
-*.gcno
-coverage/
-*.coverage
-*.coveragexml
-
-# Benchmark and profiling results
-benchmark_results/
-*.prof
-*.perf
-*.gprof
-
-# ============================================================================
-# Development Tools and Analysis
-# ============================================================================
-
-# Modern C++ development tools
-.clang-format
-.clang-tidy
-compile_commands.json
-.cppcheck
-.cpplint
-
-# Static analysis
-cppcheck-report.xml
-*.sarif
-
-# Memory debugging
-*.memcheck
-*.valgrind
-*.asan
-*.msan
-*.tsan
-
-# Sanitizer outputs
-*.san
-
-# ============================================================================
-# Runtime and Log Files
-# ============================================================================
-
-# Log files
-*.log
-logs/
-debug.log
-error.log
-
-# Temporary files
-*~
 *.tmp
 *.temp
-*.bak
-*.backup
+*~
+*.swp
+*.swo
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Configuration backups
-*.orig
-*.rej
+#------------------------------------------------------------------------------#
+# IDEs / Editors
+#------------------------------------------------------------------------------#
+# Visual Studio Code
+.vscode/
 
-# ============================================================================
-# Platform Specific
-# ============================================================================
+# CLion, IntelliJ
+.idea/
+*.iml
 
-# Linux
-*.so.*
-core
+# Visual Studio
+*.vcxproj*
+*.vcproj*
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sdf
+*.cachefile
 
-# macOS
-*.dSYM/
-.AppleDouble
-.LSOverride
-Icon
+# Xcode
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+*.xcodeproj
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
 
-# Windows
-*.exp
-*.map
-*.manifest
-*.res
-*.rc
+#------------------------------------------------------------------------------#
+# Python, scripts, misc
+#------------------------------------------------------------------------------#
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# ============================================================================
-# Asset Files (Optional)
-# ============================================================================
+#------------------------------------------------------------------------------#
+# Custom binaries (optional)
+#------------------------------------------------------------------------------#
+graphics_engine
+node_editor
+code_interpreter
+LygiaExplorer
 
-# Uncomment these if you want to ignore large asset files
-# Large texture files
-# assets/textures/*.png
-# assets/textures/*.jpg
-# assets/textures/*.tga
-# assets/textures/*.dds
-# assets/textures/*.ktx
+#------------------------------------------------------------------------------#
+# Coverage reports, profiling, docs
+#------------------------------------------------------------------------------#
+coverage/
+*.gcda
+*.gcno
+*.gcov
+htmlcov/
 
-# 3D model files
-# assets/models/*.obj
-# assets/models/*.fbx
-# assets/models/*.gltf
-# assets/models/*.glb
-# assets/models/*.dae
-
-# Audio files
-# assets/audio/*.wav
-# assets/audio/*.mp3
-# assets/audio/*.ogg
-
-# ============================================================================
-# Deployment and Containers
-# ============================================================================
-
-# Container files
-Dockerfile.local
-docker-compose.override.yml
-.env.local
-.env.development
-.env.production
-
-# Deployment artifacts
-*.tar.gz
-*.zip
-dist/
-release/
-
-# ============================================================================
-# Test Results and Screenshots
-# ============================================================================
-
-# Test results
-test_results/
-test_output/
-*.junit
-TestResults/
-
-# Screenshots and test artifacts
-screenshots/
-test_images/
-reference_images/
-diff_images/
-
-# Performance test results
-perf_results/
-benchmark_output/
+#------------------------------------------------------------------------------#
+# Other
+#------------------------------------------------------------------------------#
