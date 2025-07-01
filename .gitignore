@@ -1,7 +1,6 @@
 #------------------------------------------------------------------------------#
 # Build directories
 #------------------------------------------------------------------------------#
-# out-of-source builds
 /build/
 /bin/
 /lib/
@@ -59,14 +58,9 @@ desktop.ini
 #------------------------------------------------------------------------------#
 # IDEs / Editors
 #------------------------------------------------------------------------------#
-# Visual Studio Code
 .vscode/
-
-# CLion, IntelliJ
 .idea/
 *.iml
-
-# Visual Studio
 *.vcxproj*
 *.vcproj*
 *.sln
@@ -75,8 +69,6 @@ desktop.ini
 *.userosscache
 *.sdf
 *.cachefile
-
-# Xcode
 *.xcworkspace
 xcuserdata/
 *.xcuserstate
@@ -93,6 +85,9 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Scripts directory (build/utility scripts)
+scripts/
 
 #------------------------------------------------------------------------------#
 # Custom binaries (optional)
@@ -112,5 +107,8 @@ coverage/
 htmlcov/
 
 #------------------------------------------------------------------------------#
-# Other
+# Explicitly allow src/ (override any broader ignore rules)
 #------------------------------------------------------------------------------#
+!src/
+!src/**
+
