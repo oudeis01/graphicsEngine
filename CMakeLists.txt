@@ -4,56 +4,73 @@ project(GraphicsEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Use FetchContent for dependencies
+# Force all dependencies to be downloaded instead of using system packages
+set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+
+# Build static libraries by default for self-contained binaries
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
+
+# Disable unnecessary features in dependencies
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+
+# Use FetchContent for all dependencies
 include(FetchContent)
 
-# Find or download GLFW
-find_package(glfw3 QUIET)
-if(NOT glfw3_FOUND)
-    message(STATUS "GLFW not found, downloading...")
-    FetchContent_Declare(
-        glfw
-        GIT_REPOSITORY https://github.com/glfw/glfw.git
-        GIT_TAG 3.3.8
-    )
-    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(glfw)
-endif()
-
-# Find or download GLEW (using git version that supports CMake)
-find_package(GLEW QUIET)
-if(NOT GLEW_FOUND)
-    message(STATUS "GLEW not found, downloading...")
-    FetchContent_Declare(
-        glew
-        GIT_REPOSITORY https://github.com/nigels-com/glew.git
-        GIT_TAG glew-2.2.0
-    )
-    set(BUILD_UTILS OFF CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(glew)
-    
-    # Create GLEW::GLEW alias for consistency
-    if(TARGET glew)
-        add_library(GLEW::GLEW ALIAS glew)
-    elseif(TARGET libglew_static)
-        add_library(GLEW::GLEW ALIAS libglew_static)
-    endif()
-endif()
-
-# Download liblo for OSC communication
-message(STATUS "Downloading liblo for OSC communication...")
+# ============================================================================
+# Download GLFW (always from source)
+# ============================================================================
+message(STATUS "Downloading GLFW...")
 FetchContent_Declare(
-    liblo
-    GIT_REPOSITORY https://github.com/radarsat1/liblo.git
-    GIT_TAG 0.31
+    glfw
+    GIT_REPOSITORY https://github.com/glfw/glfw.git
+    GIT_TAG 3.3.8
 )
-set(ENABLE_TESTS OFF CACHE BOOL "" FORCE)
-set(ENABLE_TOOLS OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(liblo)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(glfw)
 
-# Download ImGui for GUI rendering
+# ============================================================================
+# Download GLEW (always from source) - use a pre-built repository
+# ============================================================================
+message(STATUS "Downloading GLEW...")
+FetchContent_Declare(
+    glew
+    URL https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.zip
+)
+FetchContent_MakeAvailable(glew)
+
+# Build GLEW from the downloaded release
+add_library(libglew_static STATIC 
+    ${glew_SOURCE_DIR}/src/glew.c
+)
+target_include_directories(libglew_static PUBLIC ${glew_SOURCE_DIR}/include)
+target_compile_definitions(libglew_static PUBLIC GLEW_STATIC)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(libglew_static PUBLIC dl)
+endif()
+
+# Use the static GLEW target
+set(GLEW_TARGET libglew_static)
+
+# ============================================================================
+# Download OpenGL headers (modern OpenGL loader)
+# ============================================================================
+message(STATUS "Downloading OpenGL headers...")
+FetchContent_Declare(
+    opengl_headers
+    GIT_REPOSITORY https://github.com/KhronosGroup/OpenGL-Registry.git
+    GIT_TAG main
+)
+FetchContent_MakeAvailable(opengl_headers)
+
+# Find system OpenGL library (this is unavoidable as it's a system driver)
+find_package(OpenGL REQUIRED)
+
+# ============================================================================
+# Download ImGui for GUI rendering (always from source)
+# ============================================================================
 message(STATUS "Downloading ImGui...")
 FetchContent_Declare(
     imgui
@@ -62,7 +79,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui)
 
-# Download ImGui Node Editor for Node Editor Binary
+# ============================================================================
+# Download ImGui Node Editor (always from source)
+# ============================================================================
 message(STATUS "Downloading ImGui Node Editor...")
 FetchContent_Declare(
     imgui-node-editor
@@ -71,19 +90,46 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui-node-editor)
 
-# Download AngelScript for Code Interpreter Binary
+# ============================================================================
+# Download AngelScript (always from source)
+# ============================================================================
 message(STATUS "Downloading AngelScript...")
 FetchContent_Declare(
     angelscript
     GIT_REPOSITORY https://github.com/codecat/angelscript-mirror.git
     GIT_TAG master
+    SOURCE_SUBDIR sdk/angelscript/projects/cmake
 )
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(angelscript)
 
-# Find OpenGL
-find_package(OpenGL REQUIRED)
+# ============================================================================
+# liblo (OSC Communication) - MUST be dynamically linked per LGPL-2.1+
+# ============================================================================
+# Note: liblo MUST be dynamically linked to comply with LGPL-2.1+ license
+# We use system liblo instead of building from source to ensure dynamic linking
 
-# Create ImGui library
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBLO REQUIRED liblo)
+
+if(NOT LIBLO_FOUND)
+    message(FATAL_ERROR "liblo not found. Please install liblo development package:
+    Ubuntu/Debian: sudo apt-get install liblo-dev
+    Fedora/RHEL: sudo dnf install liblo-devel
+    Arch Linux: sudo pacman -S liblo
+    macOS: brew install liblo
+    Windows: Use vcpkg or install from source")
+endif()
+
+# Create interface library for liblo with dynamic linking
+add_library(liblo_dynamic INTERFACE)
+target_link_libraries(liblo_dynamic INTERFACE ${LIBLO_LIBRARIES})
+target_include_directories(liblo_dynamic INTERFACE ${LIBLO_INCLUDE_DIRS})
+target_compile_options(liblo_dynamic INTERFACE ${LIBLO_CFLAGS_OTHER})
+
+# ============================================================================
+# Create ImGui library with all required sources
+# ============================================================================
 set(IMGUI_SOURCES
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_demo.cpp
@@ -94,22 +140,17 @@ set(IMGUI_SOURCES
     ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
-add_library(imgui ${IMGUI_SOURCES})
+add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC 
     ${imgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}/backends
 )
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
+target_compile_definitions(imgui PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLEW)
 
-# Graphics Engine Core Library (shared between binaries)
-set(GRAPHICS_ENGINE_CORE_SOURCES
-    src/core/NodeGraph.cpp
-)
-
-set(GRAPHICS_ENGINE_CORE_HEADERS
-    src/core/NodeGraph.h
-)
+# ============================================================================
 # OSC Communication Library (shared between binaries)
+# ============================================================================
 set(OSC_COMMUNICATION_SOURCES
     src/osc/OSCServer.cpp
     src/osc/OSCClient.cpp
@@ -122,21 +163,40 @@ set(OSC_COMMUNICATION_HEADERS
     src/osc/OSCMessages.h
 )
 
-# Create shared libraries
-add_library(GraphicsEngineCore ${GRAPHICS_ENGINE_CORE_SOURCES} ${GRAPHICS_ENGINE_CORE_HEADERS})
-target_include_directories(GraphicsEngineCore PUBLIC src/)
+# ============================================================================
+# Graphics Engine Core Library (shared between binaries)
+# ============================================================================
+set(GRAPHICS_ENGINE_CORE_SOURCES
+    src/core/NodeGraph.cpp
+)
+
+set(GRAPHICS_ENGINE_CORE_HEADERS
+    src/core/NodeGraph.h
+)
+
+# ============================================================================
+# Create shared libraries with downloaded dependencies
+# ============================================================================
+add_library(GraphicsEngineCore STATIC ${GRAPHICS_ENGINE_CORE_SOURCES} ${GRAPHICS_ENGINE_CORE_HEADERS})
+target_include_directories(GraphicsEngineCore PUBLIC 
+    src/
+    ${glfw_SOURCE_DIR}/include
+    ${glew_SOURCE_DIR}/include
+)
 target_link_libraries(GraphicsEngineCore
     PUBLIC
     glfw
-    GLEW::GLEW
+    ${GLEW_TARGET}
     OpenGL::GL
 )
 
-add_library(OSCCommunication ${OSC_COMMUNICATION_SOURCES} ${OSC_COMMUNICATION_HEADERS})
-target_include_directories(OSCCommunication PUBLIC src/)
+add_library(OSCCommunication STATIC ${OSC_COMMUNICATION_SOURCES} ${OSC_COMMUNICATION_HEADERS})
+target_include_directories(OSCCommunication PUBLIC 
+    src/
+)
 target_link_libraries(OSCCommunication
     PUBLIC
-    lo
+    liblo_dynamic  # Dynamic linking for LGPL compliance
 )
 
 # ============================================================================
@@ -152,7 +212,15 @@ set(GRAPHICS_ENGINE_BINARY_SOURCES
 )
 
 add_executable(graphics_engine ${GRAPHICS_ENGINE_BINARY_SOURCES})
-target_compile_definitions(graphics_engine PRIVATE LYGIA_PATH="${CMAKE_SOURCE_DIR}/external/lygia")
+target_compile_definitions(graphics_engine PRIVATE 
+    LYGIA_PATH="${CMAKE_SOURCE_DIR}/external/lygia"
+    GLEW_STATIC
+)
+target_include_directories(graphics_engine PRIVATE 
+    ${glfw_SOURCE_DIR}/include
+    ${glew_SOURCE_DIR}/include
+    ${liblo_SOURCE_DIR}
+)
 target_link_libraries(graphics_engine
     PRIVATE
     GraphicsEngineCore
@@ -170,6 +238,14 @@ set(NODE_EDITOR_BINARY_SOURCES
 )
 
 add_executable(node_editor ${NODE_EDITOR_BINARY_SOURCES})
+target_compile_definitions(node_editor PRIVATE GLEW_STATIC)
+target_include_directories(node_editor PRIVATE 
+    ${glfw_SOURCE_DIR}/include
+    ${glew_SOURCE_DIR}/include
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
+    ${liblo_SOURCE_DIR}
+)
 target_link_libraries(node_editor
     PRIVATE
     GraphicsEngineCore
@@ -190,10 +266,15 @@ set(CODE_INTERPRETER_BINARY_SOURCES
 )
 
 add_executable(code_interpreter ${CODE_INTERPRETER_BINARY_SOURCES})
+target_include_directories(code_interpreter PRIVATE 
+    ${angelscript_SOURCE_DIR}/angelscript/include
+    ${liblo_SOURCE_DIR}
+)
 target_link_libraries(code_interpreter
     PRIVATE
     GraphicsEngineCore
     OSCCommunication
+    angelscript
 )
 
 # ============================================================================

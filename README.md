@@ -116,6 +116,118 @@ All synchronization occurs through the OSC protocol, and each binary can be star
 
 ---
 
+## Dependencies and Installation
+
+### System Requirements
+
+- **Operating System**: Linux (Ubuntu 20.04+, Fedora 35+, Arch Linux), macOS 12+, Windows 10+
+- **Graphics**: OpenGL 4.1+ compatible graphics card and drivers
+- **Memory**: 2GB+ RAM recommended for parallel builds
+- **Storage**: 1GB+ free space for dependencies and build artifacts
+
+### Required System Dependencies
+
+Most dependencies are automatically downloaded and built from source, but **liblo** must be installed system-wide for LGPL compliance (dynamic linking requirement).
+
+#### Ubuntu/Debian
+```bash
+sudo apt-get update
+sudo apt-get install build-essential cmake pkg-config
+sudo apt-get install liblo-dev libgl1-mesa-dev libx11-dev
+```
+
+#### Fedora/RHEL/CentOS
+```bash
+sudo dnf install gcc-c++ cmake pkg-config
+sudo dnf install liblo-devel mesa-libGL-devel libX11-devel
+```
+
+#### Arch Linux
+```bash
+sudo pacman -S base-devel cmake pkg-config
+sudo pacman -S liblo mesa libx11
+```
+
+#### macOS
+```bash
+# Install Xcode Command Line Tools
+xcode-select --install
+
+# Install Homebrew if not already installed
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install dependencies
+brew install cmake pkg-config liblo
+```
+
+#### Windows (vcpkg)
+```powershell
+# Install Visual Studio 2019+ with C++ tools
+# Install CMake and add to PATH
+
+# Install vcpkg
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+.\bootstrap-vcpkg.bat
+
+# Install liblo
+.\vcpkg install liblo:x64-windows
+```
+
+### Automatically Downloaded Dependencies
+
+The following dependencies are automatically downloaded and built from source during the CMake build process:
+
+- **GLFW 3.3.8**: Window management and OpenGL context creation
+- **GLEW 2.2.0**: OpenGL extension loading  
+- **ImGui 1.90.1**: Immediate mode GUI framework
+- **ImGui Node Editor**: Visual node graph editing
+- **AngelScript 2.38.0**: Scripting engine
+- **OpenGL Headers**: Modern OpenGL API definitions
+
+### Build Instructions
+
+```bash
+# Clone the repository
+git clone https://github.com/oudeis01/graphicsEngine
+cd graphicsEngine
+
+# Create build directory
+mkdir build && cd build
+
+# Configure and build (automatically downloads dependencies)
+cmake ..
+make -j$(nproc)  # Linux/macOS
+# OR
+cmake --build . --config Release  # Windows
+```
+
+### Troubleshooting
+
+#### liblo not found
+```bash
+# Error: "liblo not found. Please install liblo development package"
+# Solution: Install liblo using package manager as shown above
+```
+
+#### OpenGL errors
+```bash
+# Error: OpenGL context creation failed
+# Solution: Update graphics drivers
+# NVIDIA: Install latest nvidia drivers
+# AMD: Install latest mesa or amdgpu drivers  
+# Intel: Install latest mesa drivers
+```
+
+#### X11 errors (Linux)
+```bash
+# Error: X11 libraries not found
+# Solution: Install X11 development packages
+sudo apt-get install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+```
+
+---
+
 ## OSC Communication Workflow
 
 ### System Startup
@@ -204,7 +316,7 @@ Dependencies are automatically downloaded via CMake FetchContent:
 ## Project Structure
 
 ```text
-graphicsEngine-clean2/
+graphicsEngine/
 ├── src/                    # Source code
 │   └── graphics/          # Graphics engine modules
 ├── shaders/               # GLSL shader files

@@ -114,6 +114,118 @@ graph TB
 
 ---
 
+## 의존성 및 설치 (Dependencies and Installation)
+
+### 시스템 요구사항 (System Requirements)
+
+- **운영체제**: Linux (Ubuntu 20.04+, Fedora 35+, Arch Linux), macOS 12+, Windows 10+
+- **그래픽카드**: OpenGL 4.1+ 호환 그래픽카드 및 드라이버
+- **메모리**: 병렬 빌드를 위해 2GB+ RAM 권장
+- **저장공간**: 의존성 및 빌드 산출물을 위해 1GB+ 여유 공간
+
+### 필수 시스템 의존성 (Required System Dependencies)
+
+대부분의 의존성은 자동으로 소스에서 다운로드 및 빌드되지만, **liblo**는 LGPL 준수를 위해 시스템 차원에서 설치해야 합니다(동적 링킹 요구사항).
+
+#### Ubuntu/Debian
+```bash
+sudo apt-get update
+sudo apt-get install build-essential cmake pkg-config
+sudo apt-get install liblo-dev libgl1-mesa-dev libx11-dev
+```
+
+#### Fedora/RHEL/CentOS
+```bash
+sudo dnf install gcc-c++ cmake pkg-config
+sudo dnf install liblo-devel mesa-libGL-devel libX11-devel
+```
+
+#### Arch Linux
+```bash
+sudo pacman -S base-devel cmake pkg-config
+sudo pacman -S liblo mesa libx11
+```
+
+#### macOS
+```bash
+# Xcode Command Line Tools 설치
+xcode-select --install
+
+# Homebrew가 설치되지 않은 경우 설치
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 의존성 설치
+brew install cmake pkg-config liblo
+```
+
+#### Windows (vcpkg)
+```powershell
+# Visual Studio 2019+ with C++ tools 설치
+# CMake 설치 및 PATH에 추가
+
+# vcpkg 설치
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+.\bootstrap-vcpkg.bat
+
+# liblo 설치
+.\vcpkg install liblo:x64-windows
+```
+
+### 자동 다운로드 의존성 (Automatically Downloaded Dependencies)
+
+다음 의존성들은 CMake 빌드 과정에서 자동으로 소스에서 다운로드 및 빌드됩니다:
+
+- **GLFW 3.3.8**: 윈도우 관리 및 OpenGL 컨텍스트 생성
+- **GLEW 2.2.0**: OpenGL 확장 로딩  
+- **ImGui 1.90.1**: 즉시 모드 GUI 프레임워크
+- **ImGui Node Editor**: 시각적 노드 그래프 편집
+- **AngelScript 2.38.0**: 스크립팅 엔진
+- **OpenGL Headers**: 모던 OpenGL API 정의
+
+### 빌드 방법 (Build Instructions)
+
+```bash
+# 저장소 클론
+git clone https://github.com/oudeis01/graphicsEngine
+cd graphicsEngine
+
+# 빌드 디렉토리 생성
+mkdir build && cd build
+
+# 구성 및 빌드 (의존성 자동 다운로드)
+cmake ..
+make -j$(nproc)  # Linux/macOS
+# 또는
+cmake --build . --config Release  # Windows
+```
+
+### 문제 해결 (Troubleshooting)
+
+#### liblo를 찾을 수 없음
+```bash
+# 오류: "liblo not found. Please install liblo development package"
+# 해결책: 위에서 설명한 패키지 매니저를 사용하여 liblo 설치
+```
+
+#### OpenGL 오류
+```bash
+# 오류: OpenGL context creation failed
+# 해결책: 그래픽 드라이버 업데이트
+# NVIDIA: 최신 nvidia 드라이버 설치
+# AMD: 최신 mesa 또는 amdgpu 드라이버 설치  
+# Intel: 최신 mesa 드라이버 설치
+```
+
+#### X11 오류 (Linux)
+```bash
+# 오류: X11 libraries not found
+# 해결책: X11 개발 패키지 설치
+sudo apt-get install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+```
+
+---
+
 ## OSC Communication Workflow (OSC 통신 워크플로우)
 
 ### 1. 시스템 시작 (System Startup)
@@ -165,7 +277,7 @@ graph TB
 ## Project Structure (프로젝트 구조)
 
 ```text
-graphicsEngine-clean2/
+graphicsEngine/
 ├── src/                           # Source code
 │   ├── graphics/                  # Graphics Engine Binary
 │   │   ├── GraphicsEngine.*       # Main graphics engine
