@@ -401,12 +401,7 @@ graph TD
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-### Third-Party Components
-- **GLFW**: zlib/libpng License
-- **GLEW**: Modified BSD License
-- **LYGIA**: Prosperity Public License 3.0.0 (commercial use requires separate licensing)
+For all licensing and third-party component details, please refer to the [LICENSE](LICENSE) file.
 
 ---
 

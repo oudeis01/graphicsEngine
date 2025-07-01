@@ -93,6 +93,7 @@ notes/
 pipeline.txt
 imgui.ini
 demos/
+tests/
 
 #------------------------------------------------------------------------------#
 # Custom binaries (optional)
