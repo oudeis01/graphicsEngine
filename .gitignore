@@ -89,6 +89,9 @@ __pycache__/
 # Scripts directory (build/utility scripts)
 scripts/
 notes/
+.github/
+pipeline.txt
+
 
 #------------------------------------------------------------------------------#
 # Custom binaries (optional)
