@@ -4,6 +4,14 @@ project(GraphicsEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ============================================================================
+# FetchContent Cache Configuration
+# ============================================================================
+# Set a persistent cache directory within project to preserve downloads
+# This keeps everything self-contained while avoiding re-downloads
+set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/.cmake-cache" CACHE STRING "FetchContent cache directory")
+message(STATUS "FetchContent cache directory: ${FETCHCONTENT_BASE_DIR}")
+
 # Force all dependencies to be downloaded instead of using system packages
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
 
@@ -24,6 +32,7 @@ FetchContent_Declare(
     glfw
     GIT_REPOSITORY https://github.com/glfw/glfw.git
     GIT_TAG 3.3.8
+    GIT_SHALLOW TRUE
 )
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -62,6 +71,7 @@ FetchContent_Declare(
     opengl_headers
     GIT_REPOSITORY https://github.com/KhronosGroup/OpenGL-Registry.git
     GIT_TAG main
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(opengl_headers)
 
@@ -76,6 +86,7 @@ FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
     GIT_TAG v1.90.1
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(imgui)
 
@@ -87,6 +98,7 @@ FetchContent_Declare(
     imgui-node-editor
     GIT_REPOSITORY https://github.com/thedmd/imgui-node-editor.git
     GIT_TAG master
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(imgui-node-editor)
 
@@ -98,6 +110,7 @@ FetchContent_Declare(
     angelscript
     GIT_REPOSITORY https://github.com/codecat/angelscript-mirror.git
     GIT_TAG master
+    GIT_SHALLOW TRUE
     SOURCE_SUBDIR sdk/angelscript/projects/cmake
 )
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
@@ -282,8 +295,9 @@ target_link_libraries(code_interpreter
 # ============================================================================
 
 # LYGIA Explorer example (standalone utility)
-add_executable(LygiaExplorer examples/lygia_explorer.cpp)
-target_compile_features(LygiaExplorer PRIVATE cxx_std_20)
+# TODO: Restore when examples/lygia_explorer.cpp is implemented
+# add_executable(LygiaExplorer examples/lygia_explorer.cpp)
+# target_compile_features(LygiaExplorer PRIVATE cxx_std_20)
 
 # Note: Legacy GraphicsEngineTest and LygiaShaderDemo have been removed
 # as they depend on the old GraphicsEngine and ShaderManager classes
@@ -350,3 +364,36 @@ add_custom_target(run-explorer
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Running LYGIA Explorer..."
 )
+
+# ============================================================================
+# Selective Clean Targets (preserve downloaded sources)
+# ============================================================================
+
+# Clean all build artifacts but preserve downloaded sources in _deps
+add_custom_target(clean-build
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/CMakeFiles
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/CMakeCache.txt
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/cmake_install.cmake
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/Makefile
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/graphics_engine || true
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/node_editor || true
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/code_interpreter || true
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/lib || true
+    COMMENT "Cleaning build artifacts while preserving downloaded sources..."
+)
+
+# Full clean including downloaded sources (use when dependencies need refresh)
+add_custom_target(clean-all
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}
+    COMMENT "Full clean including downloaded sources (will re-download everything)..."
+)
+
+# Quick reconfigure (clean build cache but keep compiled objects when possible)
+add_custom_target(reconfigure
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/CMakeCache.txt
+    COMMAND ${CMAKE_COMMAND} ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Reconfiguring CMake while preserving as much as possible..."
+)
+
+# ============================================================================
