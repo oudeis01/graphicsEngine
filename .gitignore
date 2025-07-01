@@ -92,6 +92,7 @@ notes/
 .github/
 pipeline.txt
 imgui.ini
+demos/
 
 #------------------------------------------------------------------------------#
 # Custom binaries (optional)
