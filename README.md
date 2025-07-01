@@ -1,5 +1,7 @@
 # Graphics Engine Project Overview
 
+> **한글 문서 바로가기**: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
+
 ## Vision
 
 This project aims to create a modular real-time graphics pipeline tool that mimics SuperCollider's architecture by separating the engine and interpreter. Through DSL (Domain Specific Language) and node-based GUI, users can generate GLSL-based Uber Shaders in real-time and experiment with various graphic effects using scripts written in AngelScript or through a Node Editor.
@@ -68,6 +70,39 @@ The main interface of this application is a code file written in AngelScript. Wh
 4. **Graphics Engine** uploads Uber Shader to GPU and performs real-time rendering
 5. When **Node Editor** is active, Intermediate FBOs are created for each node to provide previews
 6. **Graphics API Abstraction Layer** supports future expansion to various graphics APIs
+
+---
+
+## Quick Start
+
+### Build and Run
+
+```bash
+# Configure and build
+cmake -B build
+make -C build
+
+# Run main application
+make -C build run
+
+# Run LYGIA shader demo
+make -C build run-demo
+
+# Run LYGIA explorer
+make -C build run-explorer
+```
+
+### Requirements
+
+- **CMake 3.15+**: Build system
+- **C++17 compiler**: GCC, Clang, or MSVC
+- **OpenGL 4.1+**: Graphics API support
+- **Linux/macOS/Windows**: Cross-platform support
+
+Dependencies are automatically downloaded via CMake FetchContent:
+- GLFW 3.3.8 (Window management)
+- GLEW 2.2.0 (OpenGL extensions)
+- LYGIA GLSL Library (Shader modules)
 
 ---
 
@@ -154,6 +189,17 @@ graph TD
     C --> F[GLSL/LYGIA]
     D --> G[DSL Parser]
 ```
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Third-Party Components
+- **GLFW**: zlib/libpng License
+- **GLEW**: Modified BSD License
+- **LYGIA**: Prosperity Public License 3.0.0 (commercial use requires separate licensing)
 
 ---
 
