@@ -152,6 +152,7 @@ set(GRAPHICS_ENGINE_BINARY_SOURCES
 )
 
 add_executable(graphics_engine ${GRAPHICS_ENGINE_BINARY_SOURCES})
+target_compile_definitions(graphics_engine PRIVATE LYGIA_PATH="${CMAKE_SOURCE_DIR}/external/lygia")
 target_link_libraries(graphics_engine
     PRIVATE
     GraphicsEngineCore
@@ -247,20 +248,20 @@ add_custom_target(run-all
     COMMENT "Starting all three binaries for testing..."
 )
 
-# Legacy compatibility targets
-add_custom_target(run
-    COMMAND ${CMAKE_BINARY_DIR}/GraphicsEngineTest
-    DEPENDS GraphicsEngineTest
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMENT "Running legacy Graphics Engine Test..."
-)
+# Legacy compatibility targets (disabled - binaries don't exist in new architecture)
+# add_custom_target(run
+#     COMMAND ${CMAKE_BINARY_DIR}/GraphicsEngineTest
+#     DEPENDS GraphicsEngineTest
+#     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+#     COMMENT "Running legacy Graphics Engine Test..."
+# )
 
-add_custom_target(run-demo
-    COMMAND ${CMAKE_BINARY_DIR}/LygiaShaderDemo
-    DEPENDS LygiaShaderDemo
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMENT "Running LYGIA Shader Demo..."
-)
+# add_custom_target(run-demo
+#     COMMAND ${CMAKE_BINARY_DIR}/LygiaShaderDemo
+#     DEPENDS LygiaShaderDemo
+#     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+#     COMMENT "Running LYGIA Shader Demo..."
+# )
 
 add_custom_target(run-explorer
     COMMAND ${CMAKE_BINARY_DIR}/LygiaExplorer

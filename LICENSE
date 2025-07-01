@@ -20,14 +20,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
----
-
-## Third-Party Licenses
+================================================================================
+THIRD-PARTY LICENSES
+================================================================================
 
 This project uses the following third-party libraries:
 
 ### GLFW (3.3.8)
-- License: zlib/libpng License
+- License: zlib/libpng License (compatible with MIT)
 - Repository: https://github.com/glfw/glfw
 - Copyright: Copyright (c) 2002-2006 Marcus Geelnard, Copyright (c) 2006-2019 Camilla Löwy
 
@@ -36,13 +36,48 @@ This project uses the following third-party libraries:
 - Repository: https://github.com/nigels-com/glew
 - Copyright: Copyright (C) 2002-2007, Milan Ikits <milan ikits[]ieee org>
 
-### OpenGL
-- System graphics library - licensing varies by platform
+### liblo (0.31)
+- License: LGPL-2.1+ (GNU Lesser General Public License)
+- Repository: https://github.com/radarsat1/liblo
+- Copyright: Copyright (C) 2014 Steve Harris et al.
+- Note: LGPL allows linking with MIT-licensed code
+
+### ImGui (1.90.1)
+- License: MIT License
+- Repository: https://github.com/ocornut/imgui
+- Copyright: Copyright (c) 2014-2024 Omar Cornut
+
+### ImGui Node Editor
+- License: MIT License
+- Repository: https://github.com/thedmd/imgui-node-editor
+- Copyright: Copyright (c) 2019-2021 Michał Cichoń
+
+### AngelScript
+- License: zlib License (compatible with MIT)
+- Repository: https://github.com/codecat/angelscript-mirror
+- Copyright: Copyright (c) 2003-2024 Andreas Jönsson
 
 ### LYGIA GLSL Library
-- License: The Prosperity Public License 3.0.0
+- License: The Prosperity Public License 3.0.0 (NON-COMMERCIAL)
 - Repository: https://github.com/patriciogonzalezvivo/lygia
 - Copyright: Patricio Gonzalez Vivo (patriciogonzalezvivo.com)
 - Note: Commercial use requires separate licensing after 30-day trial period
 
-Please refer to the individual license files in the external/ directory for complete license terms.
+### OpenGL
+- System graphics library - licensing varies by platform
+- Industry standard graphics API
+
+================================================================================
+LICENSE COMPATIBILITY NOTE
+================================================================================
+
+All third-party libraries retain their original licensing terms. The combination
+of licenses allows this project to be distributed under the MIT License while
+maintaining compatibility with all dependencies:
+
+- MIT, zlib, and BSD licenses are fully compatible
+- LGPL (liblo) allows linking with MIT-licensed code
+- LYGIA requires separate commercial licensing for commercial use
+
+For commercial use of this project, verify LYGIA licensing requirements.
+Please refer to individual license files for complete terms.
